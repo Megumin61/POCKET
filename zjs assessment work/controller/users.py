@@ -33,10 +33,22 @@ def check_users_infor():
             'username':session.get('username')
         }
 @users_bp.route('/post_passage',methods=['POST'])
-def post_passage(permission=0):
+def post_passage():
     data=request.get_json(force=True)
     content=data.get('content')
-    permission=data.get('permission')
+    permission = data.get('permission')
+    if permission =="private":
+        conn, cursor = get_connection()
+        cursor.execute('update `users` set `permission`=%s where id=%s', (int(1), session.get('user_id')))
+        conn.commit()
+        cursor.close()
+        conn.close()
+    else:
+        conn, cursor = get_connection()
+        cursor.execute('update `users` set `permission`=%s where id=%s', (int(0), session.get('user_id')))
+        conn.commit()
+        cursor.close()
+        conn.close()
     p_passage(content,permission)
     return '发布成功！'
 @users_bp.route('/change_passage',methods=['PUT'])
@@ -61,15 +73,22 @@ def get_passage():
     return content
 @users_bp.route('/admin',methods=['POST'])
 def delete_users():
-    data=request.get_json(froce=True)
-    username=data.get('username')
+    data=request.get_json(force=True)
+    username=data.get('del_username')
     return de_users(username)
-@users_bp.route('/see',methods=['GET'])
+@users_bp.route('/see',methods=['GET','POST'])
 def see_passages():
+    conn, cursor = get_connection()
+    data = request.get_json(force=True)
+    id = data.get('passage_id')
+    cursor.execute('select permission from `users` where `id`=%s', (id,))
+    permission = cursor.fetchone()[0]
+    cursor.close()
+    conn.close()
     if permission==0:
-        data=request.get_json(froce=True)
+        data=request.get_json(force=True)
         passage_id=data.get('passage_id')
-        return s_passages()
+        return s_passages(id)
     if permission==1:
         return '没有权限'
 

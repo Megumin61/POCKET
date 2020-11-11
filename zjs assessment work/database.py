@@ -30,7 +30,7 @@ def check_inf(username,password):
     conn, cursor = get_connection()
     cursor.execute('select `id`,`password` from `users` where `username`=%s', (username,))
     values = cursor.fetchone()
-    if values[0] or values[1] is None:
+    if values is None:
         raise HttpError(400, '用户名或密码错误')
     user_id = values[0]
     pwd = values[1]
@@ -39,6 +39,8 @@ def check_inf(username,password):
     session['username']=username
     session['user_id']=user_id
     session['password'] =password
+    return "登录成功"
+
 
 def change_name(username):
     conn, cursor = get_connection()
@@ -86,19 +88,22 @@ def d_passage(content):
     cursor.close()
     conn.close()
 def de_users(username):
-    if username == 'admin':
-        conn, cursor = get_connection()
+    conn, cursor = get_connection()
+    if session.get('username',) == 'admin':
         cursor.execute('delete from users where `username`=%s',username)
         conn.commit()
         cursor.close()
         conn.close()
         return '用户 %s 已经被删除！！' % username
 
-    else:
+    if username != 'admin':
+        conn.commit()
+        cursor.close()
+        conn.close()
         return '没有该用户...'
-def s_passages(passage_id):
+def s_passages(id):
     conn, cursor = get_connection()
-    cursor.execute('select `passages` from `users` where `id`=%s', (passage_id,))
+    cursor.execute('select `passages` from `users` where `id`=%s', (id,))
     content = cursor.fetchone()[0]
     cursor.close()
     conn.close()
